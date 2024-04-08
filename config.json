@@ -1,0 +1,12 @@
+{
+    "folders": {
+        "output_file_folder": "/Users/pamui/Documents/Developer/PythonPrograms/collect_gpx_data/results",
+        "input_files_folder": "/Users/pamui/Documents/Developer/PythonPrograms/collect_gpx_data/assets",
+        "reference_distance_folder": "/Users/pamui/Documents/Developer/PythonPrograms/collect_gpx_data/reference"
+    },
+    "excel_params": {
+        "table_name": "RaceResults",
+        "sheet_name": "Race_Data",
+        "table_style_name": "TableStyleMedium4"
+    }
+}

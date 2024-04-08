@@ -1,5 +1,6 @@
 
 import glob
+import json
 import gpxpy
 import gpxpy.gpx
 import pandas as pd
@@ -10,6 +11,16 @@ from openpyxl.styles import NamedStyle
 from openpyxl.worksheet.table import Table, TableStyleInfo
 from openpyxl.utils import get_column_letter
 from datetime import datetime
+
+with open('config.json', 'r') as config_file:
+    config = json.load(config_file)
+
+output_folder = config['folders']['output_file_folder']
+input_folder = config['folders']['input_files_folder']
+reference_distance_folder = config['folders']['reference_distance_folder']
+table_name = config['excel_params']['table_name']
+sheet_name = config['excel_params']['sheet_name']
+table_style_name = config['excel_params']['table_style_name']
 
 def parse_gpx(file_path):
     with open(file_path, 'r') as gpx_file:
@@ -35,11 +46,11 @@ def parse_gpx(file_path):
                 yield competitor_id, category, start_time, finish_time, elapsed_time, distance2d, distance3d, no_time
 
 timestamp_str = datetime.now().strftime('%Y%m%d_%H%M%S')
-output_file = f'/Users/pamui/Documents/Developer/PythonPrograms/collect_gpx_data/results/race_results_{timestamp_str}.xlsx'
+output_file = f'{output_folder}/race_results_{timestamp_str}.xlsx'
 def write_to_excel(data, output_file=output_file):
     wb = Workbook()
     ws = wb.active
-    ws.title = "Race_Data"
+    ws.title = sheet_name
 
     # Headers
     ws.append(['Competitor Id', 'Category', 'Start Time', 'Finish Time', 'Total time', 'Total Distance 2d', 'Total Distance 3d', 'No Time'])
@@ -69,10 +80,10 @@ def write_to_excel(data, output_file=output_file):
     table_range = f"A1:{end_cell}"
 
     # Create the table
-    table = Table(displayName="RaceResults", ref=table_range)
+    table = Table(displayName=table_name, ref=table_range)
 
     # Add a default table style (optional)
-    table_style = TableStyleInfo(name="TableStyleMedium4", showFirstColumn=True,
+    table_style = TableStyleInfo(name=table_style_name, showFirstColumn=True,
                                 showLastColumn=False, showRowStripes=True, showColumnStripes=False)
     table.tableStyleInfo = table_style
 
@@ -81,7 +92,7 @@ def write_to_excel(data, output_file=output_file):
     wb.save(output_file)
 
 # Path where your GPX files are stored
-gpx_files = glob.glob(f'/Users/pamui/Documents/Developer/PythonPrograms/collect_gpx_data/assets/**/*.gpx', recursive=True)
+gpx_files = glob.glob(f'{input_folder}/**/*.gpx', recursive=True)
 
 # Collect data from each file
 all_data = []
