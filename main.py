@@ -15,12 +15,29 @@ from datetime import datetime
 with open('config.json', 'r') as config_file:
     config = json.load(config_file)
 
-output_folder = config['folders']['output_file_folder']
 input_folder = config['folders']['input_files_folder']
 reference_distance_folder = config['folders']['reference_distance_folder']
-table_name = config['excel_params']['table_name']
-sheet_name = config['excel_params']['sheet_name']
-table_style_name = config['excel_params']['table_style_name']
+results_output_folder = config['folders']['output_file_folder']
+results_table_name = config['excel_params']['table_name']
+results_sheet_name = config['excel_params']['sheet_name']
+results_table_style_name = config['excel_params']['table_style_name']
+
+def get_reference_data(category):
+    row = reference_data[reference_data['category'] == category]
+    if not row.empty:
+        return row.iloc[0]['min_distance2d'] 
+    return 0
+
+def parse_reference_gpx(file_path):
+    with open(file_path, 'r') as gpx_file:
+        gpx = gpxpy.parse(gpx_file)
+        
+        for track in gpx.tracks:
+            for segment in track.segments:
+                category = os.path.basename(os.path.dirname(file_path))
+                min_distance2d = segment.length_2d()/1000  # Distance in kilometers
+                
+                yield category, min_distance2d
 
 def parse_gpx(file_path):
     with open(file_path, 'r') as gpx_file:
@@ -37,23 +54,26 @@ def parse_gpx(file_path):
                     start_time = segment.points[0].time.replace(tzinfo=None)
                     finish_time = segment.points[-1].time.replace(tzinfo=None)
                 distance2d = segment.length_2d()/1000  # Distance in kilometers
-                distance3d = segment.length_3d()/1000  # Distance in kilometers
+                min_distance2d = get_reference_data(category)
+                distance_ok = True
+                distance_diference = distance2d - min_distance2d
+                if distance2d < min_distance2d: distance_ok = False
                 elapsed_time = (finish_time - start_time).total_seconds()
                 no_time = False
                 if elapsed_time < 1: 
                     no_time = True
                 
-                yield competitor_id, category, start_time, finish_time, elapsed_time, distance2d, distance3d, no_time
+                yield competitor_id, category, start_time, finish_time, elapsed_time, distance2d, min_distance2d, distance_diference, distance_ok, no_time
 
 timestamp_str = datetime.now().strftime('%Y%m%d_%H%M%S')
-output_file = f'{output_folder}/race_results_{timestamp_str}.xlsx'
+output_file = f'{results_output_folder}/race_results_{timestamp_str}.xlsx'
 def write_to_excel(data, output_file=output_file):
     wb = Workbook()
     ws = wb.active
-    ws.title = sheet_name
+    ws.title = results_sheet_name
 
     # Headers
-    ws.append(['Competitor Id', 'Category', 'Start Time', 'Finish Time', 'Total time', 'Total Distance 2d', 'Total Distance 3d', 'No Time'])
+    ws.append(['Competitor Id', 'Category', 'Start Time', 'Finish Time', 'Total time', 'Total Distance 2d', 'Min Distance 2d', 'Distance Difference', 'Distance Ok', 'No Time'])
 
     # Total time column
     total_time_column = None
@@ -63,8 +83,8 @@ def write_to_excel(data, output_file=output_file):
             break
 
     # Data
-    for row in data:
-        ws.append(row)
+    for index, row in data.iterrows():
+        ws.append(row.values.tolist())
 
     # Formatting duration as [h]:mm:ss
     duration_style = NamedStyle(name='duration', number_format='[h]:mm:ss')
@@ -80,10 +100,10 @@ def write_to_excel(data, output_file=output_file):
     table_range = f"A1:{end_cell}"
 
     # Create the table
-    table = Table(displayName=table_name, ref=table_range)
+    table = Table(displayName=results_table_name, ref=table_range)
 
     # Add a default table style (optional)
-    table_style = TableStyleInfo(name=table_style_name, showFirstColumn=True,
+    table_style = TableStyleInfo(name=results_table_style_name, showFirstColumn=True,
                                 showLastColumn=False, showRowStripes=True, showColumnStripes=False)
     table.tableStyleInfo = table_style
 
@@ -91,13 +111,26 @@ def write_to_excel(data, output_file=output_file):
 
     wb.save(output_file)
 
+# Path where reference GPX files are stored
+reference_gpx_files = glob.glob(f'{reference_distance_folder}/**/*.gpx', recursive=True)
+
+# Collect data from each reference file
+reference_data = []
+
+for file_path in tqdm(reference_gpx_files, desc= 'Processing reference GPX Files'):
+    reference_data.extend(parse_reference_gpx(file_path))
+
+reference_data = pd.DataFrame(reference_data, columns=['category', 'min_distance2d'])
+
 # Path where your GPX files are stored
 gpx_files = glob.glob(f'{input_folder}/**/*.gpx', recursive=True)
 
 # Collect data from each file
 all_data = []
-for file_path in tqdm(gpx_files, desc= 'Processing GPX Files'):
+for file_path in tqdm(gpx_files, desc= 'Processing competitors GPX Files'):
     all_data.extend(parse_gpx(file_path))
+
+all_data = pd.DataFrame(all_data, columns=['competitor_id', 'category', 'start_time', 'finish_time', 'elapsed_time', 'distance2d', 'min_distance2d', 'distance_diference', 'distance_ok', 'no_time'])
 
 # Write the collected data to an Excel file
 write_to_excel(all_data)
