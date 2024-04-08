@@ -7,8 +7,8 @@ import os
 from tqdm import tqdm
 from openpyxl import Workbook
 from openpyxl.styles import NamedStyle
+from openpyxl.worksheet.table import Table, TableStyleInfo
 from openpyxl.utils import get_column_letter
-from openpyxl.workbook.defined_name import DefinedName
 from datetime import datetime
 
 def parse_gpx(file_path):
@@ -39,7 +39,7 @@ output_file = f'/Users/pamui/Documents/Developer/PythonPrograms/collect_gpx_data
 def write_to_excel(data, output_file=output_file):
     wb = Workbook()
     ws = wb.active
-    ws.title = "Race Data"
+    ws.title = "Race_Data"
 
     # Headers
     ws.append(['Competitor Id', 'Category', 'Start Time', 'Finish Time', 'Total time', 'Total Distance 2d', 'Total Distance 3d', 'No Time'])
@@ -61,6 +61,22 @@ def write_to_excel(data, output_file=output_file):
         # Convert seconds to Excel time format (fraction of 24 hours)
         cell.value = cell.value / 86400  # There are 86400 seconds in a day
         cell.style = duration_style
+
+    # Define the full range of your table
+    max_row = ws.max_row
+    max_col = ws.max_column
+    end_cell = f'{get_column_letter(max_col)}{max_row}'
+    table_range = f"A1:{end_cell}"
+
+    # Create the table
+    table = Table(displayName="RaceResults", ref=table_range)
+
+    # Add a default table style (optional)
+    table_style = TableStyleInfo(name="TableStyleMedium4", showFirstColumn=True,
+                                showLastColumn=False, showRowStripes=True, showColumnStripes=False)
+    table.tableStyleInfo = table_style
+
+    ws.add_table(table)
 
     wb.save(output_file)
 
