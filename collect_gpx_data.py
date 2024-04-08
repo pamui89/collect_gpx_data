@@ -7,6 +7,8 @@ import os
 from tqdm import tqdm
 from openpyxl import Workbook
 from openpyxl.styles import NamedStyle
+from openpyxl.utils import get_column_letter
+from openpyxl.workbook.defined_name import DefinedName
 from datetime import datetime
 
 def parse_gpx(file_path):
@@ -42,13 +44,20 @@ def write_to_excel(data, output_file=output_file):
     # Headers
     ws.append(['Competitor Id', 'Category', 'Start Time', 'Finish Time', 'Total time', 'Total Distance 2d', 'Total Distance 3d', 'No Time'])
 
+    # Total time column
+    total_time_column = None
+    for cell in ws[1]:
+        if cell.value == 'Total time':
+            total_time_column = cell.column_letter
+            break
+
     # Data
     for row in data:
         ws.append(row)
 
     # Formatting duration as [h]:mm:ss
     duration_style = NamedStyle(name='duration', number_format='[h]:mm:ss')
-    for cell in ws['E'][1:]:  # Column E contains durations in seconds
+    for cell in ws[total_time_column][1:]:  # Column E contains durations in seconds
         # Convert seconds to Excel time format (fraction of 24 hours)
         cell.value = cell.value / 86400  # There are 86400 seconds in a day
         cell.style = duration_style
