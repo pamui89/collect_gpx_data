@@ -17,15 +17,20 @@ def parse_gpx(file_path):
             for segment in track.segments:
                 competitor_id = os.path.splitext(os.path.basename(file_path))[0]
                 category = os.path.basename(os.path.dirname(file_path))
-                # start_time = datetime.now()
-                # finish_time = datetime.now()
-                start_time = segment.points[0].time.replace(tzinfo=None)
-                finish_time = segment.points[-1].time.replace(tzinfo=None)
+                if segment.points[0].time is None:
+                    start_time = datetime.now()
+                    finish_time = datetime.now()
+                else:
+                    start_time = segment.points[0].time.replace(tzinfo=None)
+                    finish_time = segment.points[-1].time.replace(tzinfo=None)
                 distance2d = segment.length_2d()/1000  # Distance in kilometers
                 distance3d = segment.length_3d()/1000  # Distance in kilometers
                 elapsed_time = (finish_time - start_time).total_seconds()
+                no_time = False
+                if elapsed_time < 1: 
+                    no_time = True
                 
-                yield competitor_id, category, start_time, finish_time, elapsed_time, distance2d, distance3d
+                yield competitor_id, category, start_time, finish_time, elapsed_time, distance2d, distance3d, no_time
 
 timestamp_str = datetime.now().strftime('%Y%m%d_%H%M%S')
 output_file = f'/Users/pamui/Documents/Developer/PythonPrograms/collect_gpx_data/results/race_results_{timestamp_str}.xlsx'
@@ -35,7 +40,7 @@ def write_to_excel(data, output_file=output_file):
     ws.title = "Race Data"
 
     # Headers
-    ws.append(['Competitor Id', 'Category', 'Start Time', 'Finish Time', 'Total time', 'Total Distance 2d', 'Total Distance 3d'])
+    ws.append(['Competitor Id', 'Category', 'Start Time', 'Finish Time', 'Total time', 'Total Distance 2d', 'Total Distance 3d', 'No Time'])
 
     # Data
     for row in data:
