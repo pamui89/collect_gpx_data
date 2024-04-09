@@ -131,10 +131,12 @@ def write_to_excel(data, output_file=output_file):
 
     wb.save(output_file)
 
+print('Running script')
 # Collect data from competitors file
+print('Processing data from competitors file')
 competitors_data = pd.read_excel(competitors_file, sheet_name=competitors_sheet, usecols='A:I', dtype={'category': str})
 competitors_data = pd.DataFrame(competitors_data)
-print(competitors_data)
+print('Competitors data processed')
 
 # Path where reference GPX files are stored
 reference_gpx_files = glob.glob(f'{reference_distance_folder}/**/*.gpx', recursive=True)
@@ -146,6 +148,7 @@ for file_path in tqdm(reference_gpx_files, desc= 'Processing reference GPX Files
     reference_data.extend(parse_reference_gpx(file_path))
 
 reference_data = pd.DataFrame(reference_data, columns=['category', 'min_distance2d'])
+print('Reference GPX files processed')
 
 # Path where your GPX files are stored
 gpx_files = glob.glob(f'{input_folder}/**/*.gpx', recursive=True)
@@ -156,6 +159,9 @@ for file_path in tqdm(gpx_files, desc= 'Processing competitors GPX Files'):
     all_data.extend(parse_gpx(file_path))
 
 all_data = pd.DataFrame(all_data, columns=['competitor_id', 'team', 'name', 'surname', 'bike_brand', 'bike_model', 'category', 'start_time', 'finish_time', 'elapsed_time', 'distance2d', 'min_distance2d', 'gas_compensation', 'chicken_way_penalty', 'adjusted_distance', 'distance_diference', 'distance_ok', 'no_time'])
-
+print('Competitors GPX files processed')
 # Write the collected data to an Excel file
+print('Writting data to Excel')
 write_to_excel(all_data)
+print('Data writen to Excel')
+print('Success! End of script')
