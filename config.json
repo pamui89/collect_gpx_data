@@ -2,7 +2,12 @@
     "folders": {
         "output_file_folder": "/Users/pamui/Documents/Developer/PythonPrograms/collect_gpx_data/results",
         "input_files_folder": "/Users/pamui/Documents/Developer/PythonPrograms/collect_gpx_data/assets",
-        "reference_distance_folder": "/Users/pamui/Documents/Developer/PythonPrograms/collect_gpx_data/reference"
+        "reference_distance_folder": "/Users/pamui/Documents/Developer/PythonPrograms/collect_gpx_data/reference",
+        "competitors_db": {
+            "competitors_file": "/Users/pamui/Documents/Developer/PythonPrograms/collect_gpx_data/competitors/Competitors.xlsx",
+            "competitors_sheet": "Competitors",
+            "competitors_table": "CompetitorsList"
+        }
     },
     "excel_params": {
         "table_name": "RaceResults",

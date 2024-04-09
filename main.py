@@ -17,6 +17,9 @@ with open('config.json', 'r') as config_file:
 
 input_folder = config['folders']['input_files_folder']
 reference_distance_folder = config['folders']['reference_distance_folder']
+competitors_file = config['folders']["competitors_db"]['competitors_file']
+competitors_sheet = config['folders']["competitors_db"]['competitors_sheet']
+competitors_list = config['folders']["competitors_db"]['competitors_table']
 results_output_folder = config['folders']['output_file_folder']
 results_table_name = config['excel_params']['table_name']
 results_sheet_name = config['excel_params']['sheet_name']
@@ -110,6 +113,10 @@ def write_to_excel(data, output_file=output_file):
     ws.add_table(table)
 
     wb.save(output_file)
+
+# Collect data from competitors file
+competitors_data = pd.read_excel(competitors_file, sheet_name=competitors_sheet, usecols='A:G')
+competitors_data = pd.DataFrame(competitors_data)
 
 # Path where reference GPX files are stored
 reference_gpx_files = glob.glob(f'{reference_distance_folder}/**/*.gpx', recursive=True)
