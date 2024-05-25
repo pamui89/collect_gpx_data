@@ -44,7 +44,7 @@ def get_competitor_data(competitor_id):
 def get_reference_data(category):
     row = reference_data[reference_data['category'] == category]
     if not row.empty:
-        return row.iloc[0]['min_distance2d'] 
+        return row.iloc[0]['min_distance3d'] 
     return 0
 
 def parse_reference_gpx(file_path):
@@ -54,9 +54,9 @@ def parse_reference_gpx(file_path):
         for track in gpx.tracks:
             for segment in track.segments:
                 category = os.path.splitext(os.path.basename(file_path))[0]
-                min_distance2d = segment.length_2d()/1000  # Distance in kilometers
+                min_distance3d = segment.length_3d()/1000  # Distance in kilometers
                 
-                yield category, min_distance2d
+                yield category, min_distance3d
 
 def parse_gpx(file_path):
     with open(file_path, 'r') as gpx_file:
@@ -72,18 +72,18 @@ def parse_gpx(file_path):
                 else:
                     start_time = segment.points[0].time.replace(tzinfo=None)
                     finish_time = segment.points[-1].time.replace(tzinfo=None)
-                distance2d = segment.length_2d()/1000  # Distance in kilometers
-                adjusted_distance = distance2d - gas_compensation + chicken_way_penalty
-                min_distance2d = get_reference_data(category)
+                distance3d = segment.length_3d()/1000  # Distance in kilometers
+                adjusted_distance = distance3d - gas_compensation + chicken_way_penalty
+                min_distance3d = get_reference_data(category)
                 distance_ok = True
-                distance_diference = adjusted_distance - min_distance2d
-                if adjusted_distance < min_distance2d: distance_ok = False
+                distance_diference = adjusted_distance - min_distance3d
+                if adjusted_distance < min_distance3d: distance_ok = False
                 elapsed_time = (finish_time - start_time).total_seconds()
                 no_time = False
                 if elapsed_time < 1: 
                     no_time = True
                 
-                yield competitor_id, team, name, surname, bike_brand, bike_model, category, start_time, finish_time, elapsed_time, distance2d, min_distance2d, gas_compensation, chicken_way_penalty, adjusted_distance, distance_diference, distance_ok, no_time
+                yield competitor_id, team, name, surname, bike_brand, bike_model, category, start_time, finish_time, elapsed_time, distance3d, min_distance3d, gas_compensation, chicken_way_penalty, adjusted_distance, distance_diference, distance_ok, no_time
 
 timestamp_str = datetime.now().strftime('%Y%m%d_%H%M%S')
 output_file = f'{results_output_folder}/race_results_{timestamp_str}.xlsx'
@@ -93,7 +93,7 @@ def write_to_excel(data, output_file=output_file):
     ws.title = results_sheet_name
 
     # Headers
-    ws.append(['Competitor Id', 'Team', 'Name', 'Surname', 'Bike Brand', 'Bike Model', 'Category', 'Start Time', 'Finish Time', 'Total time', 'Total Distance 2d', 'Min Distance 2d', 'Gas Compensation', 'Chicken Way Penalty', 'Adjusted Total Distance', 'Distance Difference', 'Distance Ok', 'No Time'])
+    ws.append(['Competitor Id', 'Team', 'Name', 'Surname', 'Bike Brand', 'Bike Model', 'Category', 'Start Time', 'Finish Time', 'Total time', 'Total Distance 3d', 'Min Distance 3d', 'Gas Compensation', 'Chicken Way Penalty', 'Adjusted Total Distance', 'Distance Difference', 'Distance Ok', 'No Time'])
 
     # Total time column
     total_time_column = None
@@ -147,7 +147,7 @@ reference_data = []
 for file_path in tqdm(reference_gpx_files, desc= 'Processing reference GPX Files'):
     reference_data.extend(parse_reference_gpx(file_path))
 
-reference_data = pd.DataFrame(reference_data, columns=['category', 'min_distance2d'])
+reference_data = pd.DataFrame(reference_data, columns=['category', 'min_distance3d'])
 print('Reference GPX files processed')
 
 # Path where your GPX files are stored
@@ -158,7 +158,7 @@ all_data = []
 for file_path in tqdm(gpx_files, desc= 'Processing competitors GPX Files'):
     all_data.extend(parse_gpx(file_path))
 
-all_data = pd.DataFrame(all_data, columns=['competitor_id', 'team', 'name', 'surname', 'bike_brand', 'bike_model', 'category', 'start_time', 'finish_time', 'elapsed_time', 'distance2d', 'min_distance2d', 'gas_compensation', 'chicken_way_penalty', 'adjusted_distance', 'distance_diference', 'distance_ok', 'no_time'])
+all_data = pd.DataFrame(all_data, columns=['competitor_id', 'team', 'name', 'surname', 'bike_brand', 'bike_model', 'category', 'start_time', 'finish_time', 'elapsed_time', 'distance3d', 'min_distance3d', 'gas_compensation', 'chicken_way_penalty', 'adjusted_distance', 'distance_diference', 'distance_ok', 'no_time'])
 print('Competitors GPX files processed')
 # Write the collected data to an Excel file
 print('Writting data to Excel')
